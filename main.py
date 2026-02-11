@@ -1,5 +1,6 @@
 import numpy as np 
-import pandas as pd 
+import pandas as pd
+import matplotlib.pyplot as plt 
 
 np.random.seed(45)
 
@@ -24,16 +25,16 @@ def main():
     log_income = np.log1p(monthly_income)
     print(log_income)
     z = (
-        2.2 * debt_to_income
-        + 1.8 * credit_utilization
+        2 * debt_to_income
+        + 1.9 * credit_utilization
         + 0.8 * late_payments_12m
-        + 0.23 * recent_inquiries
-        + 0.12 * (open_accounts - 6)
-        - 0.35 * log_income
-        - 0.15 * job_years
-        - 0.015 * (-age + 50)
-        + np.random.normal(0.0, 0.15, size=n)
-        - 0.95
+        + 0.27 * recent_inquiries
+        + 0.17 * (open_accounts - 5)
+        - 0.30 * log_income
+        - 0.125 * job_years
+        - 0.02 * (-age + 50)
+        + np.random.normal(0.0, 0.23, size=n)
+        - 1.3
     )
     p_default = 1 / (1 + (np.exp(-z)))
     paid_12m = np.random.binomial(1, p_default)
@@ -51,12 +52,22 @@ def main():
         "paid_12m": paid_12m,
         "p_def" : p_default
     })
+
     col_features = ["age", "monthly_income", "debt_to_income", "credit_utilization", "late_payments_12m", "job_years", "open_accounts", "recent_inquiries"]
     stats = pd.DataFrame(df[["age", "monthly_income", "debt_to_income", "credit_utilization", "late_payments_12m", "job_years", "open_accounts", "recent_inquiries", "paid_12m"]].describe())
+    
     means = df.groupby("paid_12m")[col_features].mean().T
     means.columns = ["Paid", "non-paid"]
+    
     means["diff"] = means["non-paid"] - means["Paid"]
-    return means
+    df["dti_decile"] = pd.qcut(df["debt_to_income"], 10, labels=False)
+    df_viz = df[col_features + ["dti_decile", "paid_12m"]].groupby(["dti_decile"]).mean()
+    plt.bar(df_viz.index, df_viz["paid_12m"])
+    plt.title("Risk modelling credit score")
+    plt.xlabel("DTI Decile")
+    plt.ylabel("Default Rate")
+    plt.show()
+    return df_viz
 if __name__ == "__main__":
     df = main()
     print(df)
