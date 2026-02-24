@@ -8,20 +8,19 @@ from sklearn.metrics import roc_auc_score, roc_curve, brier_score_loss
 
 
 
-def credit():
+def calculations(t_pop_sample, t_dti_ratio, t_late_payments, t_job_yrs):
     np.random.seed(45)
-    n = 5000 
-
+    n = t_pop_sample
     application_id = np.arange(90000, 90000 + n)
     age = np.random.randint(25, 70, size=n) 
     monthly_income = np.random.lognormal(mean=np.log(4500), sigma=0.45, size=n)
     monthly_income = np.clip(monthly_income, 800, 25000)
 
-    debt_to_income = np.clip(np.random.beta(0.7, 2, size=n), 0, 1)
+    debt_to_income = np.clip(np.random.beta(t_dti_ratio, 1, size=n), 0, 1)
     credit_utilization = np.clip(np.random.beta(1.1, 2.9, size=n), 0, 1)
 
-    late_payments_12m = np.clip(np.random.poisson(lam=0.25, size=n), 0, 12)
-    job_years = np.clip(np.random.poisson(lam=6, size=n), 0, 25)
+    late_payments_12m = np.clip(np.random.poisson(lam=t_late_payments, size=n), 0, 12)
+    job_years = np.clip(np.random.poisson(lam=t_job_yrs, size=n), 0, 25)
 
     open_accounts = np.clip(np.random.poisson(lam=6, size=n) + 1, 1, 25)
     recent_inquiries = np.clip(np.random.poisson(lam=0.8, size=n), 0, 5)
@@ -31,9 +30,9 @@ def credit():
 
     z = (
         2 * debt_to_income
-        + 1.9 * credit_utilization
+        + 1.6 * credit_utilization
         + 0.8 * late_payments_12m
-        + 0.27 * recent_inquiries
+        + 0.22 * recent_inquiries
         + 0.17 * (open_accounts - 5)
         - 0.30 * log_income
         - 0.125 * job_years
@@ -68,12 +67,12 @@ def credit():
     means["diff"] = means["non-paid"] - means["Paid"]
     df["dti_decile"] = pd.qcut(df["debt_to_income"], 10, labels=False)
     df_viz = df[col_features + ["dti_decile", "paid_12m"]].groupby(["dti_decile"]).mean()
-    plt.bar(df_viz.index, df_viz["paid_12m"])
-    plt.title("Risk modelling credit score")
-    plt.xlabel("DTI Decile")
-    plt.ylabel("Default Rate")
-    plt.show()
-    return df_viz
-if __name__ == "__main__":
-    df = main()
-    print(df)
+
+    fig, ax = plt.subplots()
+    ax.bar(df_viz.index, df_viz["paid_12m"])
+    ax.set_title("Risk modelling credit score")
+    ax.set_xlabel("DTI Decile")
+    ax.set_ylabel("Default Rate")
+    
+    return fig
+    
