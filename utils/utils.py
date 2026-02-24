@@ -6,10 +6,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score, roc_curve, brier_score_loss
 
-np.random.seed(45)
 
-def main():
 
+def credit():
+    np.random.seed(45)
     n = 5000 
 
     application_id = np.arange(90000, 90000 + n)
@@ -28,6 +28,7 @@ def main():
 
     log_income = np.log1p(monthly_income)
     print(log_income)
+
     z = (
         2 * debt_to_income
         + 1.9 * credit_utilization
@@ -40,6 +41,7 @@ def main():
         + np.random.normal(0.0, 0.23, size=n)
         - 1.3
     )
+    
     p_default = 1 / (1 + (np.exp(-z)))
     paid_12m = np.random.binomial(1, p_default)
 
