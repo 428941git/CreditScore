@@ -26,18 +26,17 @@ def calculations(t_pop_sample, t_dti_ratio, t_late_payments, t_job_yrs):
     recent_inquiries = np.clip(np.random.poisson(lam=0.8, size=n), 0, 5)
 
     log_income = np.log1p(monthly_income)
-    print(log_income)
 
     z = (
-        2 * debt_to_income
-        + 1.6 * credit_utilization
+        2.3 * debt_to_income
+        + 1.5 * credit_utilization
         + 0.8 * late_payments_12m
         + 0.22 * recent_inquiries
         + 0.17 * (open_accounts - 5)
         - 0.30 * log_income
         - 0.125 * job_years
         - 0.02 * (-age + 50)
-        + np.random.normal(0.0, 0.23, size=n)
+        + np.random.normal(0.0, 0.1, size=n)
         - 1.3
     )
     
@@ -67,12 +66,19 @@ def calculations(t_pop_sample, t_dti_ratio, t_late_payments, t_job_yrs):
     means["diff"] = means["non-paid"] - means["Paid"]
     df["dti_decile"] = pd.qcut(df["debt_to_income"], 10, labels=False)
     df_viz = df[col_features + ["dti_decile", "paid_12m"]].groupby(["dti_decile"]).mean()
-
+    decile_col = df_viz[["debt_to_income"]]
+    decile_col.index.names = ['DTI Decile']
+    decile_col.columns = ["Avg DTI"]
+    
     fig, ax = plt.subplots()
     ax.bar(df_viz.index, df_viz["paid_12m"])
     ax.set_title("Risk modelling credit score")
     ax.set_xlabel("DTI Decile")
     ax.set_ylabel("Default Rate")
     
-    return fig
+    return fig, decile_col 
     
+if __name__ == "__main__":
+    print(calculations(1000, 0.3, 1, 6))
+    
+        
