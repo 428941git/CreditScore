@@ -8,12 +8,12 @@ from sklearn.metrics import roc_auc_score, roc_curve, brier_score_loss
 
 
 
-def calculations(t_pop_sample, t_dti_ratio, t_late_payments, t_job_yrs):
+def calculations(sel_tab, t_pop_sample, t_dti_ratio, t_late_payments, t_job_yrs, m_income):
     np.random.seed(45)
     n = t_pop_sample
     application_id = np.arange(90000, 90000 + n)
     age = np.random.randint(25, 70, size=n) 
-    monthly_income = np.random.lognormal(mean=np.log(4500), sigma=0.45, size=n)
+    monthly_income = np.random.lognormal(mean=np.log(m_income), sigma=0.45, size=n)
     monthly_income = np.clip(monthly_income, 800, 25000)
 
     debt_to_income = np.clip(np.random.beta(t_dti_ratio, 1, size=n), 0, 1)
@@ -28,16 +28,16 @@ def calculations(t_pop_sample, t_dti_ratio, t_late_payments, t_job_yrs):
     log_income = np.log1p(monthly_income)
 
     z = (
-        2.3 * debt_to_income
-        + 1.5 * credit_utilization
-        + 0.8 * late_payments_12m
-        + 0.22 * recent_inquiries
+        2.2 * debt_to_income
+        + 1.3 * credit_utilization
+        + 0.6 * late_payments_12m
+        + 0.2 * recent_inquiries
         + 0.17 * (open_accounts - 5)
-        - 0.30 * log_income
+        - 0.22 * log_income
         - 0.125 * job_years
-        - 0.02 * (-age + 50)
+        + 0.02 * (age - 50)
         + np.random.normal(0.0, 0.1, size=n)
-        - 1.3
+        - 1.5
     )
     
     p_default = 1 / (1 + (np.exp(-z)))
@@ -64,10 +64,11 @@ def calculations(t_pop_sample, t_dti_ratio, t_late_payments, t_job_yrs):
     means.columns = ["Paid", "non-paid"]
     
     means["diff"] = means["non-paid"] - means["Paid"]
-    df["dti_decile"] = pd.qcut(df["debt_to_income"], 10, labels=False)
-    df_viz = df[col_features + ["dti_decile", "paid_12m"]].groupby(["dti_decile"]).mean()
-    decile_col = df_viz[["debt_to_income"]]
-    decile_col.index.names = ['DTI Decile']
+
+    df["decile"] = pd.qcut(df[sel_tab], 10, labels=False)
+    df_viz = df[col_features + ["decile", "paid_12m"]].groupby(["decile"]).mean()
+    decile_col = df_viz[[sel_tab]]
+    decile_col.index.names = ['Decile']
     decile_col.columns = ["Avg DTI"]
     
     fig, ax = plt.subplots()
@@ -76,7 +77,7 @@ def calculations(t_pop_sample, t_dti_ratio, t_late_payments, t_job_yrs):
     ax.set_xlabel("DTI Decile")
     ax.set_ylabel("Default Rate")
     
-    return fig, decile_col 
+    return fig, df_viz
     
 if __name__ == "__main__":
     print(calculations(1000, 0.3, 1, 6))
