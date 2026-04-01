@@ -34,7 +34,7 @@ with st.sidebar:
 
 
 
-viz,  percentile = utils.calculations(sel_tab, selection, population_sample, dti_ratio, late_payments, job_years, m_income)
+viz,  percentile = utils.calc(sel_tab, selection, population_sample, dti_ratio, late_payments, job_years, m_income)
 
 with col_spanned:
     st.plotly_chart(viz)

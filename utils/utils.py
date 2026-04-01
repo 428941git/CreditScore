@@ -8,44 +8,49 @@ from sklearn.metrics import roc_auc_score, roc_curve, brier_score_loss
 
 
 
-def calculations(sel_tab, selection, t_pop_sample, t_dti_ratio, t_late_payments, t_job_yrs, m_income):
+def calc(sel_tab, selection, t_pop_sample, t_dti_ratio, t_late_payments, t_job_yrs, m_income):
 
-    #seed
     np.random.seed(45)
 
-    #population & id
+    #Population & Ids
     n = t_pop_sample
     application_id = np.arange(90000, 90000 + n)
 
-    #params
+    #Divide parameters to 3 section
+
+    #First one: basic data and foundations.
     age = np.random.randint(25, 70, size=n) 
-    monthly_income = np.clip(np.random.lognormal(mean=np.log(m_income), sigma=0.45, size=n), 800, 25000)
-    debt_to_income = np.clip(np.random.beta(t_dti_ratio, 1, size=n), 0, 1)
-    credit_utilization = np.clip(np.random.beta(1.1, 2.9, size=n), 0, 1)
-    late_payments_12m = np.clip(np.random.poisson(lam=t_late_payments, size=n), 0, 12)
     job_years = np.clip(np.random.poisson(lam=t_job_yrs, size=n), 0, 25)
     open_accounts = np.clip(np.random.poisson(lam=6, size=n) + 1, 1, 25)
+
+    #Capacity and possibilities
+    monthly_income = np.clip(np.random.lognormal(mean=np.log(m_income), sigma=0.45, size=n), 1600, 25000)
+    debt_to_income = np.clip(np.random.beta(t_dti_ratio, 1, size=n), 0, 1)
+    credit_utilization = np.clip(np.random.beta(1.1, 2.9, size=n), 0, 1)
+    
+    #Behaviour
     recent_inquiries = np.clip(np.random.poisson(lam=0.8, size=n), 0, 5)
+    late_payments_12m = np.clip(np.random.poisson(lam=t_late_payments, size=n), 0, 12)
 
-    log_income = np.log1p(monthly_income)
 
-    #statistic
+    log_income = np.log1p(monthly_income-1200)
+    
+    #Define model
     z = (
         2.2 * debt_to_income
-        + 1.3 * credit_utilization
         + 0.6 * late_payments_12m
         + 0.2 * recent_inquiries
         + 0.17 * (open_accounts - 5)
-        - 0.22 * log_income
         - 0.125 * job_years
         + 0.02 * (age - 50)
         + np.random.normal(0.0, 0.1, size=n)
         - 1.5
+        - (credit_utilization * 2.5 * (log_income - np.log1p(np.median(monthly_income))))
     )
     
-    #default
+    #Defaulted 12m
     p_default = 1 / (1 + (np.exp(-z)))
-    paid_12m = np.random.binomial(1, p_default)
+    default_12m = np.random.binomial(1, p_default)
 
     #df
     df = pd.DataFrame({
@@ -58,12 +63,17 @@ def calculations(sel_tab, selection, t_pop_sample, t_dti_ratio, t_late_payments,
         "job_years": job_years,
         "open_accounts": open_accounts,
         "recent_inquiries": recent_inquiries,
-        "paid_12m": paid_12m,
-        "p_def" : p_default
+        "default_12m": default_12m,
+        "p_def" : p_default,
+        "log_income" : log_income,
+        "z" : z,
+        "median_1p" : np.log1p(np.median(monthly_income))
+    
     })
 
-    col_features = ["age", "monthly_income", "debt_to_income", "credit_utilization", "late_payments_12m", "job_years", "open_accounts", "recent_inquiries"]
-    stats = pd.DataFrame(df[["age", "monthly_income", "debt_to_income", "credit_utilization", "late_payments_12m", "job_years", "open_accounts", "recent_inquiries", "paid_12m"]].describe())
+    #Columns 
+    col_features = ["age", "monthly_income", "debt_to_income", "credit_utilization", "late_payments_12m", "job_years", "open_accounts", "recent_inquiries", "log_income", "z", "median_1p"]
+
     
     means = df.groupby("paid_12m")[col_features].mean().T
     means.columns = ["Paid", "non-paid"]
