@@ -1,1 +1,1 @@
-#for outside connection in case of developing project
+#for outside connection in case of project development
