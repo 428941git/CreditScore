@@ -30,7 +30,6 @@ class CreditData:
         
         #Basic data and foundations, all natural numbers
         age = rng.integers(25, 70, size=pop_sample)
-        age_of_credit = np.clip(rng.poisson(lam=credit_years, size=pop_sample), 0, 15)
         job_years = np.clip(rng.poisson(lam=job_yrs, size=pop_sample), 0, 25)
         open_accounts = np.clip(rng.poisson(lam=6, size=pop_sample) + 1, 1, 25) 
 

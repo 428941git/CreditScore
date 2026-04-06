@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 class DataModel: #p for parameter
     def __init__(self, 
@@ -15,14 +16,10 @@ class DataModel: #p for parameter
         self.p_capacity = p_capacity
         self.p_recent_inquiries = p_recent_inquiries
     
-    def pd_model(self, df: pd.DataFrame) -> pd.DataFrame:
+    #we are creating model based on kaggle dataset
+    def create_model(self, df: pd.DataFrame) -> pd.DataFrame:
+        print(df.head())
         
-        pd = (
-            self.p_payment_history *
-            self.p_credit_utilization *
-            self.p_credit_history *
-            self.p_capacity *
-            self.p_recent_inquiries
-        )
 if __name__ == "__main__":
-    print(DataModel())
+    df = pd.read_csv(r"C:\Users\mturakiewicz\Desktop\python\CreditScore\Credit\data\Credit_df.csv")
+    print(df.head())
