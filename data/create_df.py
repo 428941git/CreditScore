@@ -41,7 +41,6 @@ class CreditData:
         #Behaviour
         recent_inquiries = np.clip(rng.poisson(lam=0.8, size=pop_sample), 0, 5)
         late_payments_12m = np.clip(rng.poisson(lam=late_payments, size=pop_sample), 0, 12)
-        #test1
         #Creating DataFrame
         df = pd.DataFrame({
             "application_id": application_id,
